@@ -23,7 +23,6 @@ vuelosValidos (vuelo : resto) =
     && not (vueloEsRepetido vuelo resto)
     && vuelosValidos resto
 
--- a [b, a]
 vueloEsRepetido :: Vuelo -> AgenciaDeViajes -> Bool
 vueloEsRepetido vuelo [] = False
 vueloEsRepetido vuelo [ultimo] = compararVuelos vuelo ultimo
