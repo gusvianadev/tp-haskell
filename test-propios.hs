@@ -10,8 +10,16 @@ allTests =
       "ciudadesConectadas" ~: testCiudadesConectadas,
       "modernizarFlota" ~: testModernizarFlota,
       "ciudadMasConectada" ~: testCiudadMasConectada,
-      "sePuedeLlegar" ~: testSePuedeLLegar
+      "sePuedeLlegar" ~: testSePuedeLLegar,
+      "duracionDelCaminoMasRapido" ~: testDuracionDelCaminoMasRapido,
+      "puedoVolverAOrigen" ~: testPuedoVolverAOrigen
     ]
+
+origen :: String
+origen = "BsAs"
+
+destino :: String
+destino = "Tucuman"
 
 testVuelosValidos =
   test
@@ -43,45 +51,45 @@ testVuelosValidos =
 
 testCiudadesConectadas =
   test
-    [ "ciudades conectadas sin vuelos" ~: ciudadesConectadas [] "BsAs" ~?= [],
+    [ "ciudades conectadas sin vuelos" ~: ciudadesConectadas [] origen ~?= [],
       "ciudades conectadas con un elemento"
-        ~: ciudadesConectadas [("BsAs", "Rosario", 5.0)] "BsAs"
+        ~: ciudadesConectadas [(origen, "Rosario", 5.0)] origen
         ~?= ["Rosario"],
       "ciudades conectadas con 2 vuelos, mismo origen, buscando ese origen"
-        ~: ciudadesConectadas [("BsAs", "Rosario", 3.0), ("BsAs", "Tucuman", 3.0)] "BsAs"
+        ~: ciudadesConectadas [(origen, "Rosario", 3.0), (origen, "Tucuman", 3.0)] origen
         ~?= ["Rosario", "Tucuman"],
       "ciudades conectadas con 3 vuelos, objetivo intercalado"
         ~: ciudadesConectadas
-          [ ("BsAs", "Rosario", 3.0),
-            ("Tucuman", "BsAs", 3.0),
-            ("La Quiaca", "BsAs", 3.0)
+          [ (origen, "Rosario", 3.0),
+            ("Tucuman", origen, 3.0),
+            ("La Quiaca", origen, 3.0)
           ]
-          "BsAs"
+          origen
         ~?= ["Rosario", "Tucuman", "La Quiaca"],
       "ciudades conectadas con 3 vuelos y ciudad no incluida en la agencia"
         ~: ciudadesConectadas
-          [ ("BsAs", "Rosario", 3.0),
-            ("Tucuman", "BsAs", 3.0),
-            ("La Quiaca", "BsAs", 3.0)
+          [ (origen, "Rosario", 3.0),
+            ("Tucuman", origen, 3.0),
+            ("La Quiaca", origen, 3.0)
           ]
           "Brasilia"
         ~?= [],
       "ciudades conectadas con 5 vuelos diferentes, con dos que forman un ida y vuelta"
         ~: ciudadesConectadas
-          [ ("BsAs", "Rosario", 3.0),
-            ("Tucuman", "BsAs", 2.0),
-            ("La Quiaca", "BsAs", 8.4),
-            ("BsAs", "Tucuman", 2.45)
+          [ (origen, "Rosario", 3.0),
+            ("Tucuman", origen, 2.0),
+            ("La Quiaca", origen, 8.4),
+            (origen, "Tucuman", 2.45)
           ]
-          "BsAs"
+          origen
         ~?= ["Rosario", "Tucuman", "La Quiaca"],
       "ciudades conectadas con 3 vuelos diferentes, con uno que no es ni ida ni vuelta hacia Ciudad"
         ~: ciudadesConectadas
-          [ ("BsAs", "Rosario", 3.0),
+          [ (origen, "Rosario", 3.0),
             ("Tucuman", "Salta", 3.0),
-            ("La Quiaca", "BsAs", 3.0)
+            ("La Quiaca", origen, 3.0)
           ]
-          "BsAs"
+          origen
         ~?= ["Rosario", "La Quiaca"]
     ]
 
@@ -124,39 +132,33 @@ testCiudadMasConectada =
         ~?= "La Plata"
     ]
 
-origen :: String
-origen = "BsAs"
-
-destino :: String
-destino = "Tucuman"
-
 testSePuedeLLegar =
   test
     [ "no se puede llegar sin vuelos" ~: sePuedeLlegar [] origen destino ~?= False,
       "se puede llegar con un vuelo que matchea"
-        ~: sePuedeLlegar [("BsAs", "Tucuman", 10.0)] origen destino
+        ~: sePuedeLlegar [(origen, destino, 10.0)] origen destino
         ~?= True,
       "no se puede llegar con un vuelo que no matchea"
-        ~: sePuedeLlegar [("BsAs", "Rosario", 10.0)] origen destino
+        ~: sePuedeLlegar [(origen, "Rosario", 10.0)] origen destino
         ~?= False,
       "se puede llegar sin escala con lista con multiples vuelos"
         ~: sePuedeLlegar
-          [ ("BsAs", "Rosario", 10.0),
-            ("Cordoba", "Tucuman", 10.0),
-            ("BsAs", "Tucuman", 10.0),
-            ("Rosario", "Tucuman", 10.0)
+          [ (origen, "Rosario", 10.0),
+            ("Cordoba", destino, 10.0),
+            (origen, destino, 10.0),
+            ("Rosario", destino, 10.0)
           ]
           origen
           destino
         ~?= True,
       "se puede llegar con maximo una escala con multiples vuelos, encontrando primero el origen"
         ~: sePuedeLlegar
-          [ ("BsAs", "Rosario", 10.0),
-            ("Cordoba", "Tucuman", 10.0),
-            ("BsAs", "La Plata", 10.0),
+          [ (origen, "Rosario", 10.0),
+            ("Cordoba", destino, 10.0),
+            (origen, "La Plata", 10.0),
             ("Konoha", "Ciudad Chistosa", 10.0),
             ("Rosario", "Brasil", 10.0),
-            ("Rosario", "Tucuman", 10.0),
+            ("Rosario", destino, 10.0),
             ("Rosario", "Bulnes", 10.0)
           ]
           origen
@@ -164,12 +166,12 @@ testSePuedeLLegar =
         ~?= True,
       "se puede llegar con maximo una escala con multiples vuelos, encontrando primero el destino"
         ~: sePuedeLlegar
-          [ ("Rosario", "Tucuman", 10.0),
-            ("Cordoba", "Tucuman", 10.0),
-            ("BsAs", "La Plata", 10.0),
+          [ ("Rosario", destino, 10.0),
+            ("Cordoba", destino, 10.0),
+            (origen, "La Plata", 10.0),
             ("Konoha", "Ciudad Chistosa", 10.0),
             ("Rosario", "Brasil", 10.0),
-            ("BsAs", "Rosario", 10.0),
+            (origen, "Rosario", 10.0),
             ("Rosario", "Bulnes", 10.0)
           ]
           origen
@@ -177,53 +179,148 @@ testSePuedeLLegar =
         ~?= True
     ]
 
-testDuracionMasCorta =
+testDuracionDelCaminoMasRapido =
   test
     [ "duracion del camino mas rapido con un vuelo"
-        ~: duracionDelCaminoMasRapido [("BsAs", "Tucuman", 10.0)] origen destino
+        ~: duracionDelCaminoMasRapido [(origen, destino, 10.0)] origen destino
         ~?= 10.0,
       "duracion del camino mas rapido con un vuelo directo y uno con escala, donde directo es mas rapido"
         ~: duracionDelCaminoMasRapido
-          [ ("BsAs", "Tucuman", 3.4),
-            ("Cordoba", "Tucuman", 10.0),
-            ("BsAs", "Rosario", 4.0),
-            ("Rosario", "Tucuman", 3.3)
+          [ (origen, destino, 3.4),
+            ("Cordoba", destino, 10.0),
+            (origen, "Rosario", 4.0),
+            ("Rosario", destino, 3.3)
           ]
           origen
           destino
         ~?= 3.4,
       "duracion del camino mas rapido con un vuelo directo y uno con escala, donde escala es mas rapido"
         ~: duracionDelCaminoMasRapido
-          [ ("BsAs", "Tucuman", 9.8),
-            ("Cordoba", "Tucuman", 10.0),
-            ("BsAs", "Rosario", 4.0),
-            ("Rosario", "Tucuman", 3.3)
+          [ (origen, destino, 9.8),
+            ("Cordoba", destino, 10.0),
+            (origen, "Rosario", 4.0),
+            ("Rosario", destino, 3.3)
           ]
           origen
           destino
         ~?= 7.3,
       "duracion del camino mas rapido con un vuelo directo y dos con escala, donde directo es mas rapido"
         ~: duracionDelCaminoMasRapido
-          [ ("BsAs", "Tucuman", 4.8),
-            ("Cordoba", "Tucuman", 10.0),
-            ("BsAs", "Rosario", 4.0),
-            ("Rosario", "Tucuman", 3.3),
-            ("BsAs", "La Plata", 2.0),
-            ("La Plata", "Tucuman", 3.3)
+          [ (origen, destino, 4.8),
+            ("Cordoba", destino, 10.0),
+            (origen, "Rosario", 4.0),
+            ("Rosario", destino, 3.3),
+            (origen, "La Plata", 2.0),
+            ("La Plata", destino, 3.3)
           ]
           origen
           destino
         ~?= 4.8,
       "duracion del camino mas rapido con un vuelo directo y dos con escala, donde escala es mas rapido"
         ~: duracionDelCaminoMasRapido
-          [ ("BsAs", "Tucuman", 9.8),
-            ("Cordoba", "Tucuman", 10.0),
-            ("BsAs", "Rosario", 4.0),
-            ("Rosario", "Tucuman", 3.3),
-            ("BsAs", "La Plata", 2.0),
-            ("La Plata", "Tucuman", 3.3)
+          [ (origen, destino, 9.8),
+            ("Cordoba", destino, 10.0),
+            (origen, "Rosario", 4.0),
+            ("Rosario", destino, 3.3),
+            (origen, "La Plata", 2.0),
+            ("La Plata", destino, 3.3)
           ]
           origen
           destino
         ~?= 5.3
+    ]
+
+testPuedoVolverAOrigen =
+  test
+    [ "no puedo volver al origen sin vuelos"
+        ~: puedoVolverAOrigen [] origen
+        ~?= False,
+      "no puedo volver al origen con un vuelo"
+        ~: puedoVolverAOrigen [(origen, "La Plata", 0.0)] origen
+        ~?= False,
+      "puedo volver al origen con 2 vuelos, ida y vuelta directa"
+        ~: puedoVolverAOrigen [(origen, "La Plata", 0.0), ("La Plata", origen, 0.0)] origen
+        ~?= True,
+      "puedo volver al origen con 3 vuelos, ida y vuelta con 1 escala"
+        ~: puedoVolverAOrigen
+          [ (origen, "La Plata", 0.0),
+            ("La Plata", "San Juan", 0.0),
+            ("San Juan", origen, 0.0)
+          ]
+          origen
+        ~?= True,
+      "puedo volver al origen con muchos vuelos, ida y vuelta con 1 escala y dead ends en medio estorbando"
+        ~: puedoVolverAOrigen
+          [ ("Rosario", "La Plata", 0.0),
+            ("Cordoba", "La Rioja", 0.0),
+            (origen, "La Rioja", 0.0), -- Salida 1
+            ("Neuquen", "Misiones", 0.0),
+            ("Rio Negro", "La Quiaca", 0.0),
+            ("La Rioja", "Santa Fe", 0.0), -- Primera Escala 1
+            (origen, "La Plata", 0.0), -- Salida 2
+            ("La Plata", "San Juan", 0.0), -- Primera Escala 2
+            ("Santa Fe", "Chubut", 0.0), -- Segunda Escala 1 -> Dead End
+            ("San Juan", origen, 0.0) -- Llegada 2
+          ]
+          origen
+        ~?= True,
+      "no puedo volver al origen con dos posibilidades, muchos vuelos y dead ends en medio estorbando"
+        ~: puedoVolverAOrigen
+          [ ("Rosario", "La Plata", 0.0),
+            ("Cordoba", "La Rioja", 0.0),
+            (origen, "La Rioja", 0.0), -- Salida 1
+            ("Neuquen", "Misiones", 0.0),
+            ("Rio Negro", "La Quiaca", 0.0),
+            ("La Rioja", "Santa Fe", 0.0), -- Primera Escala 1
+            (origen, "La Plata", 0.0), -- Salida 2
+            ("La Plata", "San Juan", 0.0), -- Primera Escala 2
+            ("Santa Fe", "Chubut", 0.0), -- Segunda Escala 1 -> Dead End 1
+            ("San Juan", "Rusia", 0.0) -- Segunda Escala 2 -> Dead End 2
+          ]
+          origen
+        ~?= False,
+      "puedo volver al origen con muchos vuelos, ida y vuelta con 2 escalas y dead ends en medio estorbando"
+        ~: puedoVolverAOrigen
+          -- Creo que los comentarios mas que sumar restan en este porque hay muchos dead ends
+          -- No agregue todos, deje algunos
+          [ ("Rosario", "La Plata", 0.0),
+            ("Cordoba", "La Rioja", 0.0),
+            ("La Plata", "La Rioja", 0.0), -- Primera Escala 2a
+            ("Jujuy", origen, 0.0), -- Llegada 2b
+            ("Santa Fe", "Ezeiza", 0.0),
+            (origen, "La Rioja", 0.0), -- Salida 1
+            ("Neuquen", "Misiones", 0.0),
+            ("La Rioja", "Trenquelaunquen", 0.0), -- Primera Escala 1a y Segunda Escala 2a
+            ("Rio Negro", "La Quiaca", 0.0),
+            ("La Rioja", "Santa Fe", 0.0), -- Primera Escala 1b
+            (origen, "La Plata", 0.0), -- Salida 2
+            ("La Plata", "San Juan", 0.0), -- Primera Escala 2b
+            ("Santa Fe", "Chubut", 0.0), -- Segunda Escala 1b y Tercera Escala 2a -> Dead End
+            ("Trenquelaunquen", "Rusia", 0.0), -- Segunda Escala 1a -> Dead End
+            ("San Juan", "Jujuy", 0.0), -- Segunda Escala 2b
+            ("Ezeiza", "España", 0.0)
+          ]
+          origen
+        ~?= True,
+      "no puedo volver al origen con muchos vuelos, ida y vuelta con 2 escalas y dead ends en medio estorbando"
+        ~: puedoVolverAOrigen
+          [ ("Rosario", "La Plata", 0.0),
+            ("Cordoba", "La Rioja", 0.0),
+            ("La Plata", "La Rioja", 0.0),
+            ("Jujuy", "Salta", 0.0),
+            ("Santa Fe", "Ezeiza", 0.0),
+            (origen, "La Rioja", 0.0),
+            ("Neuquen", "Misiones", 0.0),
+            ("La Rioja", "Trenquelaunquen", 0.0),
+            ("Rio Negro", "La Quiaca", 0.0),
+            ("La Rioja", "Santa Fe", 0.0),
+            (origen, "La Plata", 0.0),
+            ("La Plata", "San Juan", 0.0),
+            ("Santa Fe", "Chubut", 0.0),
+            ("Trenquelaunquen", "Rusia", 0.0),
+            ("San Juan", "Jujuy", 0.0),
+            ("Ezeiza", "España", 0.0)
+          ]
+          origen
+        ~?= False
     ]

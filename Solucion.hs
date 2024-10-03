@@ -126,37 +126,25 @@ minimoEnDuraciones (primero : segundo : resto) =
 
 -- EJERCICIO 7
 puedoVolverAOrigen :: AgenciaDeViajes -> Ciudad -> Bool
-puedoVolverAOrigen vuelos origen =
-  buscarConMultiplesEscalas vuelos origen || puedoVolverAOrigen (tail vuelos) origen
+puedoVolverAOrigen [] _ = False
+puedoVolverAOrigen vuelos ciudad = busquedaDeArbol vuelos vuelos ciudad ciudad
 
-buscarIdaYVueltaSinEscala :: AgenciaDeViajes -> Ciudad -> Bool
-buscarIdaYVueltaSinEscala [] _ = False
-buscarIdaYVueltaSinEscala ((principio, final, _) : resto) origen
-  | principio == origen = buscarSinEscala resto final origen /= vueloNulo
-  | otherwise = buscarIdaYVueltaSinEscala resto origen
-
--- buscarIdaYVueltaConEscala :: AgenciaDeViajes -> Ciudad -> Bool
--- buscarIdaYVueltaConEscala [] _ = False
--- buscarIdaYVueltaConEscala ((principio, final, _) : resto) origen
---   | principio == origen = buscarConEscala resto final origen /= vueloNulo
---   | otherwise = buscarIdaYVueltaConEscala resto origen
-
-buscarConMultiplesEscalas :: AgenciaDeViajes -> Ciudad -> Bool
-buscarConMultiplesEscalas ((principio, final, _) : resto) origen
-  | principio == origen = sinEscala /= vueloNulo || conEscala
-  | otherwise = buscarConMultiplesEscalas resto origen
+-- Link al diagrama en Excalidraw (a la derecha de la tabla)
+-- https://excalidraw.com/#json=hPpgNu7BYEaSmdiEnAqPZ,_Pr3b1RuFbA4HYTJQ8SFMQ
+busquedaDeArbol :: AgenciaDeViajes -> AgenciaDeViajes -> Ciudad -> Ciudad -> Bool
+busquedaDeArbol [] _ _ _ = False
+busquedaDeArbol _ [] _ _ = False
+busquedaDeArbol ramaPrincipal (vuelo : resto) origen destino
+  | origen == principio = destino == final || buscarEnSubrama || buscarEnMismaRama
+  | otherwise = saltearVuelo
   where
-    sinEscala = buscarSinEscala resto final origen
-    conEscala = buscarIdaYVueltaConMultiplesEscalas resto origen
-
-buscarIdaYVueltaConMultiplesEscalas :: AgenciaDeViajes -> Ciudad -> Bool
-buscarIdaYVueltaConMultiplesEscalas ((principio, final, _) : resto) origen = resolver
-  where
-    resolver :: Bool
-    resolver = buscarSinEscala resto final origen /= vueloNulo
+    (principio, final, _) = vuelo
+    listaFiltrada = eliminarOcurrencias vuelo ramaPrincipal
+    buscarEnSubrama = busquedaDeArbol listaFiltrada listaFiltrada final destino
+    buscarEnMismaRama = busquedaDeArbol listaFiltrada resto origen destino
+    saltearVuelo = busquedaDeArbol ramaPrincipal resto origen destino
 
 -- Auxiliares
-
 eliminarDuplicados :: (Eq t) => [t] -> [t]
 eliminarDuplicados [] = []
 eliminarDuplicados (x : xs) = x : eliminarDuplicados (eliminarOcurrencias x xs)
