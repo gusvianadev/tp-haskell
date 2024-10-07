@@ -1,6 +1,3 @@
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-
-{-# HLINT ignore "Use null" #-}
 module Solucion where
 
 -- Completar!
@@ -23,7 +20,6 @@ vueloNulo = ("", "", 0.0)
 -- EJERCICIO 1
 vuelosValidos :: AgenciaDeViajes -> Bool
 vuelosValidos [] = True
-vuelosValidos [vuelo] = vueloValido vuelo
 vuelosValidos (vuelo : resto) =
   vueloValido vuelo
     && not (vueloEsRepetido vuelo resto)
@@ -31,7 +27,6 @@ vuelosValidos (vuelo : resto) =
 
 vueloEsRepetido :: Vuelo -> AgenciaDeViajes -> Bool
 vueloEsRepetido _ [] = False
-vueloEsRepetido vuelo [ultimo] = compararVuelos vuelo ultimo
 vueloEsRepetido vuelo (primero : resto) =
   compararVuelos vuelo primero || vueloEsRepetido vuelo resto
 
@@ -45,14 +40,14 @@ vueloValido (origen, destino, duracion) = duracion > 0 && origen /= destino
 -- EJERCICIO 2
 ciudadesConectadas :: AgenciaDeViajes -> Ciudad -> [Ciudad]
 ciudadesConectadas [] _ = []
-ciudadesConectadas vuelos ciudad = eliminarDuplicados (resolver vuelos ciudad)
+ciudadesConectadas vuelos ciudad = eliminarDuplicados (obtenerCiudadesConectadas vuelos)
   where
-    resolver :: AgenciaDeViajes -> Ciudad -> [Ciudad]
-    resolver [] _ = []
-    resolver ((origen, destino, _) : resto) ciudad
-      | ciudad == origen = destino : resolver resto ciudad
-      | ciudad == destino = origen : resolver resto ciudad
-      | otherwise = resolver resto ciudad
+    obtenerCiudadesConectadas :: AgenciaDeViajes -> [Ciudad]
+    obtenerCiudadesConectadas [] = []
+    obtenerCiudadesConectadas ((origen, destino, _) : resto)
+      | ciudad == origen = destino : obtenerCiudadesConectadas resto
+      | ciudad == destino = origen : obtenerCiudadesConectadas resto
+      | otherwise = obtenerCiudadesConectadas resto
 
 -- EJERCICIO 3
 modernizarFlota :: AgenciaDeViajes -> AgenciaDeViajes
@@ -63,11 +58,12 @@ modernizarFlota ((origen, destino, duracion) : resto) =
 -- EJERCICIO 4
 ciudadMasConectada :: AgenciaDeViajes -> Ciudad
 ciudadMasConectada [] = []
-ciudadMasConectada vuelos = masRepetido (resolver vuelos)
+ciudadMasConectada vuelos = masRepetido (desestructurar vuelos)
   where
-    resolver :: AgenciaDeViajes -> [Ciudad]
-    resolver [] = []
-    resolver ((origen, destino, _) : resto) = origen : destino : resolver resto
+    desestructurar :: AgenciaDeViajes -> [Ciudad]
+    desestructurar [] = []
+    desestructurar ((origen, destino, _) : resto) =
+      origen : destino : desestructurar resto
 
 -- EJERCICIO 5
 sePuedeLlegar :: AgenciaDeViajes -> Ciudad -> Ciudad -> Bool
@@ -77,9 +73,9 @@ sePuedeLlegar vuelos origen destino =
     || length (buscarConEscala vuelos origen destino) > 0
 
 buscarSinEscala :: AgenciaDeViajes -> Ciudad -> Ciudad -> Vuelo
-buscarSinEscala [] _ _ = ("", "", 0.0)
+buscarSinEscala [] _ _ = vueloNulo
 buscarSinEscala (vuelo : resto) origen destino
-  | origen == principio && final == destino = vuelo
+  | principio == origen && destino == final = vuelo
   | otherwise = buscarSinEscala resto origen destino
   where
     (principio, final, duracion) = vuelo
@@ -91,7 +87,7 @@ buscarConEscala (vuelo : resto) origen destino
       vuelo
         : vueloDestinoFinalSinEscala
         : buscarConEscala resto origen destino
-  | destino == final -- Jeje
+  | destino == final -- jeje
       && vueloOrigenPrincipioSinEscala /= vueloNulo =
       vuelo : vueloOrigenPrincipioSinEscala : buscarConEscala resto origen destino
   | otherwise = buscarConEscala resto origen destino
@@ -104,16 +100,16 @@ buscarConEscala (vuelo : resto) origen destino
 duracionDelCaminoMasRapido :: AgenciaDeViajes -> Ciudad -> Ciudad -> Duracion
 duracionDelCaminoMasRapido vuelos origen destino = minimoEnDuraciones duraciones
   where
-    vueloSinEscala = buscarSinEscala vuelos origen destino
+    duraciones
+      | vueloSinEscala == vueloNulo = duracionesConEscala conEscala
+      | otherwise = sinEscala : duracionesConEscala conEscala
     (_, _, sinEscala) = vueloSinEscala
+    vueloSinEscala = buscarSinEscala vuelos origen destino
     conEscala = buscarConEscala vuelos origen destino
     duracionesConEscala :: AgenciaDeViajes -> [Duracion]
     duracionesConEscala [] = []
     duracionesConEscala ((_, _, duracion1) : (_, _, duracion2) : resto) =
       (duracion1 + duracion2) : duracionesConEscala resto
-    duraciones
-      | vueloSinEscala == vueloNulo = duracionesConEscala conEscala
-      | otherwise = sinEscala : duracionesConEscala conEscala
 
 minimo :: Float -> Float -> Float
 minimo primero segundo
@@ -132,8 +128,19 @@ puedoVolverAOrigen :: AgenciaDeViajes -> Ciudad -> Bool
 puedoVolverAOrigen [] _ = False
 puedoVolverAOrigen vuelos ciudad = busquedaDeArbol vuelos vuelos ciudad ciudad
 
--- Link al diagrama en Excalidraw (a la derecha de la tabla)
--- https://excalidraw.com/#json=hPpgNu7BYEaSmdiEnAqPZ,_Pr3b1RuFbA4HYTJQ8SFMQ
+-- Explicacion breve: usa una estructura de arbol para ir armando el vuelo de vuelta.
+--
+-- Por cada caso parcial que encuentra (origen es el correcto pero destino no) arma una subrama
+-- eliminando el elemento actual y en esa subrama usa el destino como origen y sigue buscando
+-- la ciudad original, así hasta que se queda sin vuelos. Cuando eso ocurre sigue buscando en
+-- su rama y armando subramas cuando sea necesario.
+--
+-- Link al diagrama en Excalidraw (a la derecha de la tabla de recursiones):
+-- https://excalidraw.com/#json=laMAF89IzLNy_J8pKTxDq,KTouN2yxwruCoP_fplb4Kg
+--
+-- En Excalidraw:
+-- Apretar rueda del mouse (o icono de mano en la barra de arriba): moverse en el dibujo
+-- CTRL+rueda del mouse: zoom-in/zoom-out
 busquedaDeArbol :: AgenciaDeViajes -> AgenciaDeViajes -> Ciudad -> Ciudad -> Bool
 busquedaDeArbol [] _ _ _ = False
 busquedaDeArbol _ [] _ _ = False
@@ -153,23 +160,23 @@ eliminarDuplicados [] = []
 eliminarDuplicados (x : xs) = x : eliminarDuplicados (eliminarOcurrencias x xs)
 
 eliminarOcurrencias :: (Eq t) => t -> [t] -> [t]
-eliminarOcurrencias a [] = []
+eliminarOcurrencias _ [] = []
 eliminarOcurrencias a (b : rest)
   | a == b = eliminarOcurrencias a rest
   | otherwise = b : eliminarOcurrencias a rest
 
 masRepetido :: (Eq t) => [t] -> t
 masRepetido [a] = a
-masRepetido lista = resolver lista lista
+masRepetido lista = encontrarMasRepetido lista lista
   where
-    resolver :: (Eq t) => [t] -> [t] -> t
-    resolver lista [a, b]
+    encontrarMasRepetido :: (Eq t) => [t] -> [t] -> t
+    encontrarMasRepetido lista [a, b]
       | cantidadApariciones a lista > cantidadApariciones b lista = a
       | otherwise = b
-    resolver lista (a : b : rest)
+    encontrarMasRepetido lista (a : b : rest)
       | cantidadApariciones a lista > cantidadApariciones b lista =
-          resolver lista (a : rest)
-      | otherwise = resolver lista (b : rest)
+          encontrarMasRepetido lista (a : rest)
+      | otherwise = encontrarMasRepetido lista (b : rest)
 
 cantidadApariciones :: (Eq t) => t -> [t] -> Int
 cantidadApariciones _ [] = 0

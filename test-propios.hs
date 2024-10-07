@@ -224,7 +224,7 @@ testDuracionDelCaminoMasRapido =
           origen
           destino
         ~?= 4.8,
-      "duracion del camino mas rapido con un vuelo directo y dos con escala, donde escala es mas rapido"
+      "duracion del camino mas rapido con un vuelo directo y dos con escalas, donde una escala es mas rapida"
         ~: duracionDelCaminoMasRapido
           [ (origen, destino, 9.8),
             ("Cordoba", destino, 10.0),
