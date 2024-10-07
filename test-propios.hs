@@ -25,6 +25,7 @@ testVuelosValidos =
   test
     [ "vuelos válido sin vuelos" ~: vuelosValidos [] ~?= True,
       "vuelos válido con un elemento" ~: vuelosValidos [("BsAs", "Rosario", 5.0)] ~?= True,
+      "vuelos válido con un elemento y duracion 0.0" ~: vuelosValidos [("BsAs", "Rosario", 0.0)] ~?= False,
       "vuelos válido con 2 vuelos diferentes"
         ~: vuelosValidos [("BsAs", "Rosario", 3.0), ("BsAs", "Tucuman", 3.0)]
         ~?= True,
@@ -44,6 +45,13 @@ testVuelosValidos =
         ~: vuelosValidos
           [ ("BsAs", "Rosario", 3.0),
             ("BsAs", "Cancun", 2.4),
+            ("Santa Cruz", "Camerun", -35.4)
+          ]
+        ~?= False,
+      "vuelos válido con 3 vuelos diferentes y dos con duracion cero y uno duracion negativa"
+        ~: vuelosValidos
+          [ ("BsAs", "Rosario", 0.0),
+            ("BsAs", "Cancun", 0.0),
             ("Santa Cruz", "Camerun", -35.4)
           ]
         ~?= False
@@ -244,46 +252,46 @@ testPuedoVolverAOrigen =
         ~: puedoVolverAOrigen [] origen
         ~?= False,
       "no puedo volver al origen con un vuelo"
-        ~: puedoVolverAOrigen [(origen, "La Plata", 0.0)] origen
+        ~: puedoVolverAOrigen [(origen, "La Plata", 5.5)] origen
         ~?= False,
       "puedo volver al origen con 2 vuelos, ida y vuelta directa"
-        ~: puedoVolverAOrigen [(origen, "La Plata", 0.0), ("La Plata", origen, 0.0)] origen
+        ~: puedoVolverAOrigen [(origen, "La Plata", 5.5), ("La Plata", origen, 5.5)] origen
         ~?= True,
       "puedo volver al origen con 3 vuelos, ida y vuelta con 1 escala"
         ~: puedoVolverAOrigen
-          [ (origen, "La Plata", 0.0),
-            ("La Plata", "San Juan", 0.0),
-            ("San Juan", origen, 0.0)
+          [ (origen, "La Plata", 5.5),
+            ("La Plata", "San Juan", 5.5),
+            ("San Juan", origen, 5.5)
           ]
           origen
         ~?= True,
       "puedo volver al origen con muchos vuelos, ida y vuelta con 1 escala y dead ends en medio estorbando"
         ~: puedoVolverAOrigen
-          [ ("Rosario", "La Plata", 0.0),
-            ("Cordoba", "La Rioja", 0.0),
-            (origen, "La Rioja", 0.0), -- Salida 1
-            ("Neuquen", "Misiones", 0.0),
-            ("Rio Negro", "La Quiaca", 0.0),
-            ("La Rioja", "Santa Fe", 0.0), -- Primera Escala 1
-            (origen, "La Plata", 0.0), -- Salida 2
-            ("La Plata", "San Juan", 0.0), -- Primera Escala 2
-            ("Santa Fe", "Chubut", 0.0), -- Segunda Escala 1 -> Dead End
-            ("San Juan", origen, 0.0) -- Llegada 2
+          [ ("Rosario", "La Plata", 5.5),
+            ("Cordoba", "La Rioja", 5.5),
+            (origen, "La Rioja", 5.5), -- Salida 1
+            ("Neuquen", "Misiones", 5.5),
+            ("Rio Negro", "La Quiaca", 5.5),
+            ("La Rioja", "Santa Fe", 5.5), -- Primera Escala 1
+            (origen, "La Plata", 5.5), -- Salida 2
+            ("La Plata", "San Juan", 5.5), -- Primera Escala 2
+            ("Santa Fe", "Chubut", 5.5), -- Segunda Escala 1 -> Dead End
+            ("San Juan", origen, 5.5) -- Llegada 2
           ]
           origen
         ~?= True,
       "no puedo volver al origen con dos posibilidades, muchos vuelos y dead ends en medio estorbando"
         ~: puedoVolverAOrigen
-          [ ("Rosario", "La Plata", 0.0),
-            ("Cordoba", "La Rioja", 0.0),
-            (origen, "La Rioja", 0.0), -- Salida 1
-            ("Neuquen", "Misiones", 0.0),
-            ("Rio Negro", "La Quiaca", 0.0),
-            ("La Rioja", "Santa Fe", 0.0), -- Primera Escala 1
-            (origen, "La Plata", 0.0), -- Salida 2
-            ("La Plata", "San Juan", 0.0), -- Primera Escala 2
-            ("Santa Fe", "Chubut", 0.0), -- Segunda Escala 1 -> Dead End 1
-            ("San Juan", "Rusia", 0.0) -- Segunda Escala 2 -> Dead End 2
+          [ ("Rosario", "La Plata", 5.5),
+            ("Cordoba", "La Rioja", 5.5),
+            (origen, "La Rioja", 5.5), -- Salida 1
+            ("Neuquen", "Misiones", 5.5),
+            ("Rio Negro", "La Quiaca", 5.5),
+            ("La Rioja", "Santa Fe", 5.5), -- Primera Escala 1
+            (origen, "La Plata", 5.5), -- Salida 2
+            ("La Plata", "San Juan", 5.5), -- Primera Escala 2
+            ("Santa Fe", "Chubut", 5.5), -- Segunda Escala 1 -> Dead End 1
+            ("San Juan", "Rusia", 5.5) -- Segunda Escala 2 -> Dead End 2
           ]
           origen
         ~?= False,
@@ -291,43 +299,43 @@ testPuedoVolverAOrigen =
         ~: puedoVolverAOrigen
           -- Creo que los comentarios mas que sumar restan en este porque hay muchos dead ends
           -- No agregue todos, deje algunos
-          [ ("Rosario", "La Plata", 0.0),
-            ("Cordoba", "La Rioja", 0.0),
-            ("La Plata", "La Rioja", 0.0), -- Primera Escala 2a
-            ("Jujuy", origen, 0.0), -- Llegada 2b
-            ("Santa Fe", "Ezeiza", 0.0),
-            (origen, "La Rioja", 0.0), -- Salida 1
-            ("Neuquen", "Misiones", 0.0),
-            ("La Rioja", "Trenquelaunquen", 0.0), -- Primera Escala 1a y Segunda Escala 2a
-            ("Rio Negro", "La Quiaca", 0.0),
-            ("La Rioja", "Santa Fe", 0.0), -- Primera Escala 1b
-            (origen, "La Plata", 0.0), -- Salida 2
-            ("La Plata", "San Juan", 0.0), -- Primera Escala 2b
-            ("Santa Fe", "Chubut", 0.0), -- Segunda Escala 1b y Tercera Escala 2a -> Dead End
-            ("Trenquelaunquen", "Rusia", 0.0), -- Segunda Escala 1a -> Dead End
-            ("San Juan", "Jujuy", 0.0), -- Segunda Escala 2b
-            ("Ezeiza", "España", 0.0)
+          [ ("Rosario", "La Plata", 5.5),
+            ("Cordoba", "La Rioja", 5.5),
+            ("La Plata", "La Rioja", 5.5), -- Primera Escala 2a
+            ("Jujuy", origen, 5.5), -- Llegada 2b
+            ("Santa Fe", "Ezeiza", 5.5),
+            (origen, "La Rioja", 5.5), -- Salida 1
+            ("Neuquen", "Misiones", 5.5),
+            ("La Rioja", "Trenquelaunquen", 5.5), -- Primera Escala 1a y Segunda Escala 2a
+            ("Rio Negro", "La Quiaca", 5.5),
+            ("La Rioja", "Santa Fe", 5.5), -- Primera Escala 1b
+            (origen, "La Plata", 5.5), -- Salida 2
+            ("La Plata", "San Juan", 5.5), -- Primera Escala 2b
+            ("Santa Fe", "Chubut", 5.5), -- Segunda Escala 1b y Tercera Escala 2a -> Dead End
+            ("Trenquelaunquen", "Rusia", 5.5), -- Segunda Escala 1a -> Dead End
+            ("San Juan", "Jujuy", 5.5), -- Segunda Escala 2b
+            ("Ezeiza", "España", 5.5)
           ]
           origen
         ~?= True,
       "no puedo volver al origen con muchos vuelos, ida y vuelta con 2 escalas y dead ends en medio estorbando"
         ~: puedoVolverAOrigen
-          [ ("Rosario", "La Plata", 0.0),
-            ("Cordoba", "La Rioja", 0.0),
-            ("La Plata", "La Rioja", 0.0),
-            ("Jujuy", "Salta", 0.0),
-            ("Santa Fe", "Ezeiza", 0.0),
-            (origen, "La Rioja", 0.0),
-            ("Neuquen", "Misiones", 0.0),
-            ("La Rioja", "Trenquelaunquen", 0.0),
-            ("Rio Negro", "La Quiaca", 0.0),
-            ("La Rioja", "Santa Fe", 0.0),
-            (origen, "La Plata", 0.0),
-            ("La Plata", "San Juan", 0.0),
-            ("Santa Fe", "Chubut", 0.0),
-            ("Trenquelaunquen", "Rusia", 0.0),
-            ("San Juan", "Jujuy", 0.0),
-            ("Ezeiza", "España", 0.0)
+          [ ("Rosario", "La Plata", 5.5),
+            ("Cordoba", "La Rioja", 5.5),
+            ("La Plata", "La Rioja", 5.5),
+            ("Jujuy", "Salta", 5.5),
+            ("Santa Fe", "Ezeiza", 5.5),
+            (origen, "La Rioja", 5.5),
+            ("Neuquen", "Misiones", 5.5),
+            ("La Rioja", "Trenquelaunquen", 5.5),
+            ("Rio Negro", "La Quiaca", 5.5),
+            ("La Rioja", "Santa Fe", 5.5),
+            (origen, "La Plata", 5.5),
+            ("La Plata", "San Juan", 5.5),
+            ("Santa Fe", "Chubut", 5.5),
+            ("Trenquelaunquen", "Rusia", 5.5),
+            ("San Juan", "Jujuy", 5.5),
+            ("Ezeiza", "España", 5.5)
           ]
           origen
         ~?= False
