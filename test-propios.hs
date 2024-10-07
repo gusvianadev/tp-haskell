@@ -184,6 +184,14 @@ testDuracionDelCaminoMasRapido =
     [ "duracion del camino mas rapido con un vuelo"
         ~: duracionDelCaminoMasRapido [(origen, destino, 10.0)] origen destino
         ~?= 10.0,
+      "duracion del camino mas rapido con una escala"
+        ~: duracionDelCaminoMasRapido
+          [ (origen, "Rosario", 4.0),
+            ("Rosario", destino, 3.3)
+          ]
+          origen
+          destino
+        ~?= 7.3,
       "duracion del camino mas rapido con un vuelo directo y uno con escala, donde directo es mas rapido"
         ~: duracionDelCaminoMasRapido
           [ (origen, destino, 3.4),

@@ -77,7 +77,7 @@ sePuedeLlegar vuelos origen destino =
     || length (buscarConEscala vuelos origen destino) > 0
 
 buscarSinEscala :: AgenciaDeViajes -> Ciudad -> Ciudad -> Vuelo
-buscarSinEscala [] _ _ = ("", "", 0)
+buscarSinEscala [] _ _ = ("", "", 0.0)
 buscarSinEscala (vuelo : resto) origen destino
   | origen == principio && final == destino = vuelo
   | otherwise = buscarSinEscala resto origen destino
@@ -104,13 +104,16 @@ buscarConEscala (vuelo : resto) origen destino
 duracionDelCaminoMasRapido :: AgenciaDeViajes -> Ciudad -> Ciudad -> Duracion
 duracionDelCaminoMasRapido vuelos origen destino = minimoEnDuraciones duraciones
   where
-    duraciones = sinEscala : duracionesConEscala conEscala
-    (_, _, sinEscala) = buscarSinEscala vuelos origen destino
+    vueloSinEscala = buscarSinEscala vuelos origen destino
+    (_, _, sinEscala) = vueloSinEscala
     conEscala = buscarConEscala vuelos origen destino
     duracionesConEscala :: AgenciaDeViajes -> [Duracion]
     duracionesConEscala [] = []
     duracionesConEscala ((_, _, duracion1) : (_, _, duracion2) : resto) =
       (duracion1 + duracion2) : duracionesConEscala resto
+    duraciones
+      | vueloSinEscala == vueloNulo = duracionesConEscala conEscala
+      | otherwise = sinEscala : duracionesConEscala conEscala
 
 minimo :: Float -> Float -> Float
 minimo primero segundo
