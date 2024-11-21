@@ -60,74 +60,26 @@ testVuelosValidos =
 testCiudadesConectadas =
   test
     [ "ciudades conectadas sin vuelos" ~: ciudadesConectadas [] origen ~?= [],
-      "ciudades conectadas con un elemento"
-        ~: ciudadesConectadas [(origen, "Rosario", 5.0)] origen
-        ~?= ["Rosario"],
-      "ciudades conectadas con 2 vuelos, mismo origen, buscando ese origen"
-        ~: ciudadesConectadas [(origen, "Rosario", 3.0), (origen, "Tucuman", 3.0)] origen
-        ~?= ["Rosario", "Tucuman"],
-      "ciudades conectadas con 3 vuelos, objetivo intercalado"
-        ~: ciudadesConectadas
-          [ (origen, "Rosario", 3.0),
-            ("Tucuman", origen, 3.0),
-            ("La Quiaca", origen, 3.0)
-          ]
-          origen
-        ~?= ["Rosario", "Tucuman", "La Quiaca"],
-      "ciudades conectadas con 3 vuelos y ciudad no incluida en la agencia"
-        ~: ciudadesConectadas
-          [ (origen, "Rosario", 3.0),
-            ("Tucuman", origen, 3.0),
-            ("La Quiaca", origen, 3.0)
-          ]
-          "Brasilia"
-        ~?= [],
-      "ciudades conectadas con 5 vuelos diferentes, con dos que forman un ida y vuelta"
-        ~: ciudadesConectadas
-          [ (origen, "Rosario", 3.0),
-            ("Tucuman", origen, 2.0),
-            ("La Quiaca", origen, 8.4),
-            (origen, "Tucuman", 2.45)
-          ]
-          origen
-        ~?= ["Rosario", "Tucuman", "La Quiaca"],
-      "ciudades conectadas con 3 vuelos diferentes, con uno que no es ni ida ni vuelta hacia Ciudad"
-        ~: ciudadesConectadas
-          [ (origen, "Rosario", 3.0),
-            ("Tucuman", "Salta", 3.0),
-            ("La Quiaca", origen, 3.0)
-          ]
-          origen
-        ~?= ["Rosario", "La Quiaca"]
+      expectPermutacion (ciudadesConectadas [(origen, "Rosario", 5.0)] origen) ["Rosario"],
+      expectPermutacion (ciudadesConectadas [(origen, "Rosario", 3.0), (origen, "Tucuman", 3.0)] origen) ["Rosario", "Tucuman"],
+      expectPermutacion (ciudadesConectadas [(origen, "Rosario", 3.0), ("Tucuman", origen, 3.0), ("La Quiaca", origen, 3.0) ] origen) ["Rosario", "Tucuman", "La Quiaca"],
+      expectPermutacion (ciudadesConectadas [(origen, "Rosario", 3.0), ("Tucuman", origen, 3.0), ("La Quiaca", origen, 3.0) ] "Brasilia") [],
+      expectPermutacion (ciudadesConectadas [(origen, "Rosario", 3.0), ("Tucuman", origen, 2.0), ("La Quiaca", origen, 8.4), (origen, "Tucuman", 2.45) ] origen) ["Rosario", "Tucuman", "La Quiaca"],
+      expectPermutacion (ciudadesConectadas [(origen, "Rosario", 3.0), ("Tucuman", "Salta", 3.0), ("La Quiaca", origen, 3.0) ] origen) ["Rosario", "La Quiaca"] 
     ]
 
 testModernizarFlota =
   test
     [ "modernizar flota sin vuelos" ~: modernizarFlota [] ~?= [],
-      "modernizar flota con un vuelo"
-        ~: modernizarFlota [("BsAs", "Rosario", 10.0)]
-        ~?= [("BsAs", "Rosario", 9.0)],
-      "modernizar flota con dos vuelos"
-        ~: modernizarFlota [("BsAs", "Rosario", 57.0), ("La Plata", "Ciudad Chistosa", 20.0)]
-        ~?= [("BsAs", "Rosario", 51.3), ("La Plata", "Ciudad Chistosa", 18.0)],
-      "modernizar flota con tres vuelos"
-        ~: modernizarFlota
-          [ ("BsAs", "Rosario", 57.0),
-            ("La Plata", "Ciudad Chistosa", 20.0),
-            ("La Pampa", "La Rioja", 4.0)
-          ]
-        ~?= [ ("BsAs", "Rosario", 51.3),
-              ("La Plata", "Ciudad Chistosa", 18.0),
-              ("La Pampa", "La Rioja", 3.6)
-            ]
+      expectPermutacion (modernizarFlota [("BsAs", "Rosario", 10.0)]) [("BsAs", "Rosario", 9.0)],
+      expectPermutacion (modernizarFlota [("BsAs", "Rosario", 57.0), ("La Plata", "Ciudad Chistosa", 20.0)]) [("BsAs", "Rosario", 51.3), ("La Plata", "Ciudad Chistosa", 18.0)],
+      expectPermutacion (modernizarFlota [ ("BsAs", "Rosario", 57.0), ("La Plata", "Ciudad Chistosa", 20.0), ("La Pampa", "La Rioja", 4.0) ]) [("BsAs", "Rosario", 51.3), ("La Plata", "Ciudad Chistosa", 18.0), ("La Pampa", "La Rioja", 3.6)]
     ]
 
 testCiudadMasConectada =
   test
     [ "ciudad mas conectada sin vuelos" ~: ciudadMasConectada [] ~?= [],
-      "ciudad mas conectada con un vuelo"
-        ~: ciudadMasConectada [("BsAs", "Rosario", 10.0)]
-        ~?= "Rosario",
+      "ciudad mas conectada con un vuelo" ~: ciudadMasConectada [("BsAs", "Rosario", 10.0)] ~?= "Rosario",
       "ciudad mas conectada con dos vuelos"
         ~: ciudadMasConectada [("BsAs", "Rosario", 57.0), ("BsAs", "Ciudad Chistosa", 20.0)]
         ~?= "BsAs",
@@ -137,7 +89,11 @@ testCiudadMasConectada =
             ("La Plata", "Ciudad Chistosa", 20.0),
             ("La Pampa", "La Plata", 4.5)
           ]
-        ~?= "La Plata"
+        ~?= "La Plata",
+      "ciudad mas conectada con dos posibles resultados"
+        ~: expectAny 
+          (ciudadMasConectada [("BsAs", "Rosario", 57.0), ("La Plata", "Ciudad Chistosa", 20.0), ("La Pampa", "La Plata", 4.5), ("Ciudad Chistosa", "Ciudad Aburrida", 4.5)]) 
+          (["La Plata", "Ciudad Chistosa"])
     ]
 
 testSePuedeLLegar =
@@ -190,38 +146,38 @@ testSePuedeLLegar =
 testDuracionDelCaminoMasRapido =
   test
     [ "duracion del camino mas rapido con un vuelo"
-        ~: duracionDelCaminoMasRapido [(origen, destino, 10.0)] origen destino
-        ~?= 10.0,
+        ~: aproximado (duracionDelCaminoMasRapido [(origen, destino, 10.0)] origen destino) 10.0
+        ~?= True,
       "duracion del camino mas rapido con una escala"
-        ~: duracionDelCaminoMasRapido
+        ~: aproximado (duracionDelCaminoMasRapido
           [ (origen, "Rosario", 4.0),
             ("Rosario", destino, 3.3)
           ]
           origen
-          destino
-        ~?= 7.3,
+          destino) 7.3
+        ~?= True,
       "duracion del camino mas rapido con un vuelo directo y uno con escala, donde directo es mas rapido"
-        ~: duracionDelCaminoMasRapido
+        ~: aproximado (duracionDelCaminoMasRapido
           [ (origen, destino, 3.4),
             ("Cordoba", destino, 10.0),
             (origen, "Rosario", 4.0),
             ("Rosario", destino, 3.3)
           ]
           origen
-          destino
-        ~?= 3.4,
+          destino) 3.4
+        ~?= True,
       "duracion del camino mas rapido con un vuelo directo y uno con escala, donde escala es mas rapido"
-        ~: duracionDelCaminoMasRapido
+        ~: aproximado (duracionDelCaminoMasRapido
           [ (origen, destino, 9.8),
             ("Cordoba", destino, 10.0),
             (origen, "Rosario", 4.0),
             ("Rosario", destino, 3.3)
           ]
           origen
-          destino
-        ~?= 7.3,
+          destino) 7.3
+        ~?= True,
       "duracion del camino mas rapido con un vuelo directo y dos con escala, donde directo es mas rapido"
-        ~: duracionDelCaminoMasRapido
+        ~: aproximado (duracionDelCaminoMasRapido
           [ (origen, destino, 4.8),
             ("Cordoba", destino, 10.0),
             (origen, "Rosario", 4.0),
@@ -230,10 +186,10 @@ testDuracionDelCaminoMasRapido =
             ("La Plata", destino, 3.3)
           ]
           origen
-          destino
-        ~?= 4.8,
+          destino) 4.8
+        ~?= True,
       "duracion del camino mas rapido con un vuelo directo y dos con escalas, donde una escala es mas rapida"
-        ~: duracionDelCaminoMasRapido
+        ~: aproximado (duracionDelCaminoMasRapido
           [ (origen, destino, 9.8),
             ("Cordoba", destino, 10.0),
             (origen, "Rosario", 4.0),
@@ -242,8 +198,8 @@ testDuracionDelCaminoMasRapido =
             ("La Plata", destino, 3.3)
           ]
           origen
-          destino
-        ~?= 5.3
+          destino) 5.3
+        ~?= True
     ]
 
 testPuedoVolverAOrigen =
@@ -340,3 +296,23 @@ testPuedoVolverAOrigen =
           origen
         ~?= False
     ]
+
+
+-- Auxiliares
+-- margetFloat(): Float
+-- asegura: res es igual a 0.00001
+margenFloat = 0.00001
+
+aproximado :: Float -> Float -> Bool
+aproximado x y = abs (x - y) < margenFloat
+
+expectPermutacion :: (Ord a, Show a) => [a] -> [a] -> Test
+expectPermutacion actual expected = esPermutacion actual expected ~? ("expected list: " ++ show expected ++ "\nbut got: " ++ show actual)
+
+esPermutacion :: (Ord a) => [a] -> [a] -> Bool
+esPermutacion a b = (length a == length b) && (sort a == sort b)
+
+-- expectAny (actual: a, expected: [a]): Test
+-- asegura: res es un Test Verdadero si y sólo si actual pertenece a la lista expected
+expectAny :: (Foldable t, Eq a, Show a, Show (t a)) => a -> t a -> Test
+expectAny actual expected = elem actual expected ~? ("expected any of: " ++ show expected ++ "\n but got: " ++ show actual)
